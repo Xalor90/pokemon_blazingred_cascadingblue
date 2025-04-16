@@ -1,7 +1,7 @@
 # Parse parameters
 param (
     [Parameter(Mandatory=$false)]
-    [string[]]$Exclude = @()
+    [string[]]$Components = @()
 )
 
 # Check for administrative privileges
@@ -11,24 +11,32 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # Define component names
-$COMPONENTS = @("7zip", "python", "devkitpro", "msys2")
+$AVAILABLE_COMPONENTS = @("7zip", "python", "devkitpro", "msys2", "assembly")
 
 # Show help if requested
-if ($Exclude -contains "help" -or $Exclude -contains "?" -or $Exclude -contains "-h" -or $Exclude -contains "--help") {
-    Write-Host "Uninstall script for GBA development framework" -ForegroundColor Cyan
-    Write-Host "Usage: ./uninstall.ps1 [-Exclude component1,component2,...]" -ForegroundColor Cyan
+if ($Components -contains "help" -or $Components -contains "?" -or $Components -contains "-h" -or $Components -contains "--help" -or $args -contains "/?" -or $args -contains "-help") {
+    Write-Host "GBA Development Framework Uninstall Script" -ForegroundColor Cyan
+    Write-Host "------------------------------------------" -ForegroundColor Cyan
+    Write-Host "Usage: ./uninstall.ps1 [-Components component1,component2,...]" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Options:" -ForegroundColor Yellow
-    Write-Host "  -Exclude: Components to exclude from uninstallation" -ForegroundColor Yellow
+    Write-Host "Parameters:" -ForegroundColor Yellow
+    Write-Host "  -Components: Specific components to uninstall" -ForegroundColor Yellow
+    Write-Host "               If not specified, all components will be uninstalled" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Available components:" -ForegroundColor Yellow
-    Write-Host "  7zip: 7-Zip file archiver" -ForegroundColor Yellow
-    Write-Host "  python: Python and pip packages in MSYS2" -ForegroundColor Yellow
-    Write-Host "  devkitpro: DevkitPro GBA development tools" -ForegroundColor Yellow
-    Write-Host "  msys2: MSYS2 environment" -ForegroundColor Yellow
+    Write-Host "  7zip      - 7-Zip file archiver" -ForegroundColor Yellow
+    Write-Host "  python    - Python and pip packages in MSYS2" -ForegroundColor Yellow
+    Write-Host "  devkitpro - DevkitPro GBA development tools" -ForegroundColor Yellow
+    Write-Host "  msys2     - MSYS2 environment" -ForegroundColor Yellow
+    Write-Host "  assembly  - Assembly support (directories and environment variable)" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Example: ./uninstall.ps1 -Exclude 7zip,msys2" -ForegroundColor Cyan
-    Write-Host "  This will uninstall DevkitPro and Python, but keep 7-Zip and MSYS2" -ForegroundColor Cyan
+    Write-Host "Examples:" -ForegroundColor Cyan
+    Write-Host "  ./uninstall.ps1" -ForegroundColor Cyan
+    Write-Host "    This will uninstall all components" -ForegroundColor Cyan
+    Write-Host "  ./uninstall.ps1 -Components assembly" -ForegroundColor Cyan
+    Write-Host "    This will only remove Assembly support" -ForegroundColor Cyan
+    Write-Host "  ./uninstall.ps1 -Components devkitpro,assembly" -ForegroundColor Cyan
+    Write-Host "    This will only uninstall DevkitPro and Assembly support" -ForegroundColor Cyan
     exit 0
 }
 
@@ -36,6 +44,33 @@ if ($Exclude -contains "help" -or $Exclude -contains "?" -or $Exclude -contains 
 $msys2Path = "C:\msys64"
 $devkitProPath = "/opt/devkitpro"  # MSYS2 path
 $devkitProWindowsPath = "C:\devkitPro"  # Windows path
+$projectRoot = Get-Location
+
+# Process component selection
+$selectedComponents = @()
+
+# If specific components are requested, use those
+if ($Components.Count -gt 0) {
+    # Validate each component
+    foreach ($component in $Components) {
+        if ($AVAILABLE_COMPONENTS -contains $component) {
+            $selectedComponents += $component
+        } else {
+            Write-Host "Warning: Unknown component '$component'. Skipping." -ForegroundColor Yellow
+        }
+    }
+    
+    # If no valid components after validation, show warning
+    if ($selectedComponents.Count -eq 0) {
+        Write-Host "No valid components specified. Use one of: $($AVAILABLE_COMPONENTS -join ', ')" -ForegroundColor Yellow
+        exit 1
+    }
+} 
+# Otherwise, use all available components
+else {
+    $selectedComponents = $AVAILABLE_COMPONENTS
+    Write-Host "No specific components specified. Uninstalling all components." -ForegroundColor Yellow
+}
 
 # Function to log uninstallation steps
 function Write-UninstallLog {
@@ -101,8 +136,69 @@ function Remove-FromPath {
     }
 }
 
+# Function to remove assembly support
+function Remove-AssemblySupport {
+    Write-Host "Removing Assembly support..." -ForegroundColor Yellow
+    
+	if (Test-Path "config.local.mk") {
+		Remove-Item "config.local.mk" -Force
+		Write-Host "config.local.mk has been removed."
+	} else {
+		Write-Host "config.local.mk does not exist."
+	}
+
+    # Define assembly directories
+    $asmDirs = @(
+        "asm/src",
+        "asm/include",
+        "asm/macros",
+        "asm/data",
+        "asm/lib",
+        "asm"
+    )
+    
+    # Check if any assembly directories exist
+    $anyDirExists = $false
+    foreach ($dir in $asmDirs) {
+        $fullPath = Join-Path -Path $projectRoot -ChildPath $dir
+        if (Test-Path $fullPath) {
+            $anyDirExists = $true
+            break
+        }
+    }
+    
+    # Only prompt for removal if directories exist
+    $removeDirectories = $false
+    if ($anyDirExists) {
+        $confirmation = Read-Host "Assembly directories found. Do you want to remove all assembly directories and files? (Y/N)"
+        if ($confirmation -eq "Y" -or $confirmation -eq "y") {
+            $removeDirectories = $true
+        } else {
+            Write-Host "Assembly directories will not be removed." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "No assembly directories found to remove." -ForegroundColor Cyan
+    }
+    
+    if ($removeDirectories) {
+        foreach ($dir in $asmDirs) {
+            $fullPath = Join-Path -Path $projectRoot -ChildPath $dir
+            if (Test-Path $fullPath) {
+                try {
+                    Remove-Item -Path $fullPath -Recurse -Force
+                    Write-Host "Removed $dir directory" -ForegroundColor Green
+                } catch {
+                    Write-Host "Failed to remove $dir directory: $_" -ForegroundColor Red
+                }
+            }
+        }
+    }
+    
+    Write-Host "Assembly support removal completed." -ForegroundColor Green
+}
+
 # Remove 7-Zip
-if (-not (Should-Skip -Component "7zip")) {
+if ($selectedComponents -contains "7zip") {
     Write-UninstallLog -Component "7zip" -Message "Starting uninstallation" -Status "Start" -Important
     try {
         # Get the uninstall string from registry
@@ -122,7 +218,7 @@ if (-not (Should-Skip -Component "7zip")) {
 $msys2Exists = Test-Path $msys2Path
 
 # Remove Python and pip packages from MSYS2
-if (-not (Should-Skip -Component "python") -and $msys2Exists) {
+if ($selectedComponents -contains "python" -and $msys2Exists) {
     Write-UninstallLog -Component "Python" -Message "Starting uninstallation" -Status "Start" -Important
     try {
         # Check if pacman and python exist first
@@ -144,8 +240,14 @@ if (-not (Should-Skip -Component "python") -and $msys2Exists) {
     }
 }
 
+# Remove Assembly Support
+if ($selectedComponents -contains "assembly") {
+    Write-UninstallLog -Component "Assembly" -Message "Starting uninstallation" -Status "Start" -Important
+    Remove-AssemblySupport
+}
+
 # Remove DevkitPro
-if (-not (Should-Skip -Component "devkitpro")) {
+if ($selectedComponents -contains "devkitpro") {
     Write-UninstallLog -Component "DevkitPro" -Message "Starting uninstallation" -Status "Start" -Important
     
     # Remove DevkitPro packages from MSYS2
@@ -229,7 +331,7 @@ if (-not (Should-Skip -Component "devkitpro")) {
 }
 
 # Remove MSYS2
-if (-not (Should-Skip -Component "msys2") -and $msys2Exists) {
+if ($selectedComponents -contains "msys2" -and $msys2Exists) {
     Write-UninstallLog -Component "MSYS2" -Message "Starting uninstallation" -Status "Start" -Important
     try {
         # Remove from PATH first
@@ -269,9 +371,10 @@ if (-not (Should-Skip -Component "msys2") -and $msys2Exists) {
 }
 
 Write-Host "`nUninstallation summary:" -ForegroundColor Cyan
-foreach ($component in $COMPONENTS) {
-    if ($Exclude -contains $component) {
-        Write-Host "  $component - Skipped (excluded)" -ForegroundColor Cyan
+# Display summary of selected components
+foreach ($component in $AVAILABLE_COMPONENTS) {
+    if ($selectedComponents -notcontains $component) {
+        Write-Host "  $component - Skipped (not selected)" -ForegroundColor Cyan
     } else {
         # Check if component was actually present
         $present = switch ($component) {
@@ -279,13 +382,14 @@ foreach ($component in $COMPONENTS) {
             "msys2" { -not (Test-Path $msys2Path) }
             "devkitpro" { -not (Test-Path $devkitProWindowsPath) }
             "python" { -not (Test-Path "$msys2Path\usr\bin\python.exe") }
+            "assembly" { -not [Environment]::GetEnvironmentVariable("GBA_ASM_SUPPORT", [EnvironmentVariableTarget]::Machine) }
             default { $false }
         }
         
         if ($present) {
-            Write-Host "  $component - Uninstalled" -ForegroundColor Green
+            Write-Host "  $component - Uninstalled successfully" -ForegroundColor Green
         } else {
-            Write-Host "  $component - Uninstalled (may have had errors)" -ForegroundColor Yellow
+            Write-Host "  $component - Uninstall attempted (may have had errors)" -ForegroundColor Yellow
         }
     }
 }
