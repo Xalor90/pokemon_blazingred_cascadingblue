@@ -17,7 +17,7 @@ I will be updating this list as I add new functionality to the framework.
 ### Installation and Setup
 
 1. Fork the Repository
-   - Navigate to the (original repository)[https://github.com/Xalor90/gba-framework] on GitHub.
+   - Navigate to the [original repository](https://github.com/Xalor90/gba-framework) on GitHub.
    - Click the Fork button in the upper-right corner.
    - Name your fork of the repo to your desired game/project name.
 2. Clone Your Repository
