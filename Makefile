@@ -17,7 +17,7 @@ OBJCOPY := arm-none-eabi-objcopy
 # Paths
 BUILD   := build
 SOURCES := $(GAME_SRC) $(FRAMEWORK_SRC)
-INCLUDES := -I$(GAME_INC) -I$(FRAMEWORK_INC)
+INCLUDES := -I$(GAME_INC) $(addprefix -I, $(FRAMEWORK_INC))
 
 # Assembly handling
 ifeq ($(ASM_ENABLED),1)

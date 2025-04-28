@@ -1,4 +1,4 @@
-#include "graphics.hpp"
+#include "display.hpp"
 
 void Graphics::Display::SetMode(u16 mode) {
     REG_DISPCNT = mode;
