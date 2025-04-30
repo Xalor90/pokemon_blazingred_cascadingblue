@@ -13,17 +13,6 @@ ifeq ($(ASM_ENABLED),1)
 	AS	:= arm-none-eabi-as
 endif
 
-# Directory Paths
-DIST_DIR		:= dist
-BUILD_DIR		:= build
-SRC_DIR			:= $(BUILD_DIR)/src
-FRAMEWORK_DIR	:= $(BUILD_DIR)/framework
-MAP_DIR			:= $(BUILD_DIR)/map
-ELF_DIR			:= $(BUILD_DIR)/elf
-ASM_DIR			:= $(BUILD_DIR)/asm
-ASM_SRC_DIR		:= $(ASM_DIR)/src
-ASM_LIB_DIR		:= $(ASM_DIR)/lib
-
 # Game-specific configuration
 TARGET			:= my_game
 GAME_SRC		:= $(wildcard src/*.cpp)
