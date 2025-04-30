@@ -14,9 +14,8 @@ ifeq ($(ASM_ENABLED),1)
 endif
 
 # Game-specific configuration
-TARGET			:= my_game
-GAME_SRC		:= $(wildcard src/*.cpp)
-GAME_INC		:= include
+GAME_SRC := $(wildcard src/*.cpp)
+GAME_INC := include
 
 # Assembly support
 # Check if GBA_ASM_SUPPORT environment variable is set

@@ -50,15 +50,29 @@ ifeq ($(ASM_ENABLED),1)
 	ASFLAGS		:= $(ARCH)
 endif
 
-# Build target
-all: $(DIST_DIR)/$(TARGET).gba
+# Build targets
+all: blazingred cascadingblue
 
-$(DIST_DIR)/$(TARGET).gba: $(OBJECTS)
+blazingred: $(DIST_DIR)/blazingred.gba
+	@echo "BlazingRed ROM built successfully: $@"
+
+cascadingblue: $(DIST_DIR)/cascadingblue.gba
+	@echo "CascadingBlue ROM built successfully: $@"
+
+$(DIST_DIR)/blazingred.gba: $(OBJECTS)
 	@mkdir -p $(MAP_DIR) # Ensure the map directory exists
 	@mkdir -p $(ELF_DIR) # Ensure the elf directory exists
 	@mkdir -p $(@D)      # Ensure the dist directory exists
-	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/$(TARGET).map -o $(ELF_DIR)/$(TARGET).elf $^
-	$(OBJCOPY) -v -O binary $(ELF_DIR)/$(TARGET).elf $@
+	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/blazingred.map -o $(ELF_DIR)/blazingred.elf $^
+	$(OBJCOPY) -v -O binary $(ELF_DIR)/blazingred.elf $@
+	gbafix $@
+
+$(DIST_DIR)/cascadingblue.gba: $(OBJECTS)
+	@mkdir -p $(MAP_DIR) # Ensure the map directory exists
+	@mkdir -p $(ELF_DIR) # Ensure the elf directory exists
+	@mkdir -p $(@D)      # Ensure the dist directory exists
+	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/cascadingblue.map -o $(ELF_DIR)/cascadingblue.elf $^
+	$(OBJCOPY) -v -O binary $(ELF_DIR)/cascadingblue.elf $@
 	gbafix $@
 
 # Pattern rule for building object files
@@ -81,7 +95,7 @@ ifeq ($(ASM_ENABLED),1)
 		$(AS) $(ASFLAGS) $(INCLUDES_ASM) -c $< -o $@
 endif
 
-# Clean up build files
+# Clean up build and dist files
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo "Build artifacts cleaned"
@@ -95,4 +109,4 @@ endif
 	@echo "Build environment reset"
 
 # Phony targets
-.PHONY: all clean reset
+.PHONY: all blazingred cascadingblue clean reset
