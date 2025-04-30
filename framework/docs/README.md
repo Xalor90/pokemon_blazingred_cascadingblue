@@ -18,24 +18,24 @@ I will be updating this list as I add new functionality to the framework.
 
 1. Create a New Repository from the Template
    - Navigate to the [GBA Framework repository](https://github.com/Xalor90/gba-framework) on GitHub.
-   - Click the **Use this template** button in the upper-right corner.
+   - Click the `Use this template` button in the upper-right corner.
    - Name your new repo after your desired game/project.
 2. Clone Your Repository
    - Clone your newly created repository to your local machine. Open your terminal (or Git Bash) and run:
-      - `git clone https://github.com/your-username/your-project-name.git`
-      - Replace **your-username** and **your-project-name** with your actual GitHub username and the repository name you set.
+	  - `git clone https://github.com/your-username/your-project-name.git`
+	  - Replace `your-username` and `your-project-name` with your actual GitHub username and the repository name you set.
 3. Run the Installation Script
    - Windows:
-      - Open PowerShell in the root directory of your cloned repository.
-      - To view available installation options, run:
-         - `.\install.ps1 -help`
-      - To install the project with assembly support enabled, run:
-         - `.\install.ps1 -WithAssembly`
-         - Running this command will set up your project accordingly, including creating a local configuration override (e.g., config.local.mk) with assembly support enabled.
+	  - Open PowerShell in the root directory of your cloned repository.
+	  - To view available installation options, run:
+		 - `.\install.ps1 -help`
+	  - To install the project with assembly support enabled, run:
+		 - `.\install.ps1 -WithAssembly`
+		 - Running this command will set up your project accordingly, including creating a local configuration override (e.g., config.local.mk) with assembly support enabled.
    - Mac:
-      - WIP: Installation instructions to be added at a later date.
+	  - WIP: Installation instructions to be added at a later date.
    - Linux:
-      - WIP: Installation instructions to be added at a later date.
+	  - WIP: Installation instructions to be added at a later date.
 
 ### Usage
 
