@@ -1,6 +1,10 @@
 # Include configuration files
 include config.mk
 
+# Game Variables
+PBR := blazingred
+PCB := cascadingblue
+
 # Directory Paths
 BUILD_DIR		:= build
 SRC_BUILD_DIR	:= $(BUILD_DIR)/src
@@ -57,26 +61,26 @@ endif
 # Build targets
 all: blazingred cascadingblue
 
-blazingred: $(DIST_DIR)/blazingred.gba
-	@echo "BlazingRed ROM built successfully: $@"
+blazingred: $(DIST_DIR)/$(PBR).gba
+	@echo "BlazingRed ROM built successfully!"
 
-cascadingblue: $(DIST_DIR)/cascadingblue.gba
-	@echo "CascadingBlue ROM built successfully: $@"
+cascadingblue: $(DIST_DIR)/$(PCB).gba
+	@echo "CascadingBlue ROM built successfully!"
 
-$(DIST_DIR)/blazingred.gba: $(OBJECTS)
+$(DIST_DIR)/$(PBR).gba: $(OBJECTS)
 	@mkdir -p $(MAP_DIR) # Ensure the map directory exists
 	@mkdir -p $(ELF_DIR) # Ensure the elf directory exists
 	@mkdir -p $(@D)      # Ensure the dist directory exists
-	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/blazingred.map -o $(ELF_DIR)/blazingred.elf $^
-	$(OBJCOPY) -v -O binary $(ELF_DIR)/blazingred.elf $@
+	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/$(PBR).map -o $(ELF_DIR)/$(PBR).elf $^
+	$(OBJCOPY) -v -O binary $(ELF_DIR)/$(PBR).elf $@
 	gbafix $@
 
-$(DIST_DIR)/cascadingblue.gba: $(OBJECTS)
+$(DIST_DIR)/$(PCB).gba: $(OBJECTS)
 	@mkdir -p $(MAP_DIR) # Ensure the map directory exists
 	@mkdir -p $(ELF_DIR) # Ensure the elf directory exists
 	@mkdir -p $(@D)      # Ensure the dist directory exists
-	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/cascadingblue.map -o $(ELF_DIR)/cascadingblue.elf $^
-	$(OBJCOPY) -v -O binary $(ELF_DIR)/cascadingblue.elf $@
+	$(CXX) $(LDFLAGS) -Wl,-Map,$(MAP_DIR)/$(PCB).map -o $(ELF_DIR)/$(PCB).elf $^
+	$(OBJCOPY) -v -O binary $(ELF_DIR)/$(PCB).elf $@
 	gbafix $@
 
 # Pattern rule for building object files
