@@ -1,3 +1,11 @@
 # Framework-specific configuration
-FRAMEWORK_SRC := $(wildcard framework/src/*.cpp) $(wildcard framework/src/*/*.cpp)
-FRAMEWORK_INC := $(wildcard framework/include/) $(wildcard framework/include/*/)
+FRAMEWORK_DIR			:= framework
+FRAMEWORK_SRC_DIR		:= $(FRAMEWORK_DIR)/src
+FRAMEWORK_INC_DIR		:= $(FRAMEWORK_DIR)/include
+FRAMEWORK_BUILD_DIR		:= $(BUILD_DIR)/$(FRAMEWORK_DIR)
+
+FRAMEWORK_SRC		:= $(wildcard $(FRAMEWORK_SRC_DIR)/*.cpp) $(wildcard $(FRAMEWORK_SRC_DIR)/*/*.cpp)
+FRAMEWORK_INC		:= $(wildcard $(FRAMEWORK_INC_DIR)/) $(wildcard $(FRAMEWORK_INC_DIR)/*/)
+
+FRAMEWORK_INCLUDES	:= $(addprefix -I, $(FRAMEWORK_INC))
+FRAMEWORK_OBJECTS := $(patsubst $(FRAMEWORK_SRC_DIR)/%.cpp,$(FRAMEWORK_BUILD_DIR)/%.o,$(FRAMEWORK_SRC))

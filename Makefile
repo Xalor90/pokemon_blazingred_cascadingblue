@@ -1,43 +1,47 @@
 # Include configuration files
 include config.mk
-include framework.mk
 
 # Directory Paths
 BUILD_DIR		:= build
-SRC_DIR			:= $(BUILD_DIR)/src
-FRAMEWORK_DIR	:= $(BUILD_DIR)/framework
+SRC_BUILD_DIR	:= $(BUILD_DIR)/src
 MAP_DIR			:= $(BUILD_DIR)/map
 ELF_DIR			:= $(BUILD_DIR)/elf
 DIST_DIR		:= $(BUILD_DIR)/dist
 
 # Assembly Directory Paths
 ifeq ($(ASM_ENABLED),1)
-	ASM_DIR			:= $(BUILD_DIR)/asm
-	ASM_SRC_DIR		:= $(ASM_DIR)/src
-	ASM_LIB_DIR		:= $(ASM_DIR)/lib
+	ASM_BUILD_DIR		:= $(BUILD_DIR)/asm
+	ASM_SRC_BUILD_DIR	:= $(ASM_BUILD_DIR)/src
+	ASM_LIB_BUILD_DIR	:= $(ASM_BUILD_DIR)/lib
 endif
 
+# Include Framework Configuration
+include framework.mk
+
 # Ensure build and dist directories exist
-$(shell mkdir -p $(SRC_DIR) $(FRAMEWORK_DIR) $(MAP_DIR) $(ELF_DIR) $(DIST_DIR))
+$(shell mkdir -p $(SRC_BUILD_DIR) $(FRAMEWORK_BUILD_DIR) $(MAP_DIR) $(ELF_DIR) $(DIST_DIR))
 
 # Create assembly build directories if assembly is enabled
 ifeq ($(ASM_ENABLED),1)
-	$(shell mkdir -p $(ASM_SRC_DIR) $(ASM_LIB_DIR))
+	$(shell mkdir -p $(ASM_SRC_BUILD_DIR) $(ASM_LIB_BUILD_DIR))
 endif
 
 # Sources and includes
-SOURCES		:= $(GAME_SRC) $(FRAMEWORK_SRC)
-INCLUDES	:= -I$(GAME_INC) $(addprefix -I, $(FRAMEWORK_INC))
+SOURCES		:= $(SRC)
+INCLUDES	:= -I$(INC) $(FRAMEWORK_INCLUDES)
 
 # Object files
-OBJECTS := $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(filter %.cpp,$(SOURCES)))
-OBJECTS += $(patsubst %.c,$(BUILD_DIR)/%.o,$(filter %.c,$(SOURCES)))
+OBJECTS		:= $(patsubst $(SRC_DIR)/%.cpp,$(SRC_BUILD_DIR)/%.o,$(filter %.cpp,$(SOURCES)))
+OBJECTS		+= $(patsubst $(SRC_DIR)/%.c,$(SRC_BUILD_DIR)/%.o,$(filter %.c,$(SOURCES)))
 
 # Assembly object files
 ifeq ($(ASM_ENABLED),1)
-	OBJECTS += $(patsubst %.s,$(ASM_SRC_DIR)/%.o,$(filter %.s,$(ASM_SRC)))
-	OBJECTS += $(patsubst %.s,$(ASM_LIB_DIR)/%.o,$(filter %.s,$(ASM_LIB)))
+	OBJECTS += $(patsubst $(ASM_SRC_DIR)/%.s,$(ASM_SRC_BUILD_DIR)/%.o,$(filter %.s,$(ASM_SRC)))
+	OBJECTS += $(patsubst $(ASM_LIB_DIR)/%.s,$(ASM_LIB_BUILD_DIR)/%.o,$(filter %.s,$(ASM_LIB)))
 endif
+
+# Framework object files
+OBJECTS		+= $(FRAMEWORK_OBJECTS)
 
 # Flags
 ARCH		:= -mthumb-interwork -mthumb
@@ -72,25 +76,30 @@ $(BUILD_DIR)/%.o: %.c
 
 # Pattern rule for building assembly object files
 ifeq ($(ASM_ENABLED),1)
-	$(ASM_SRC_DIR)/%.o: %.s
+	$(ASM_SRC_BUILD_DIR)/%.o: %.s
 		@mkdir -p $(@D)
 		$(AS) $(ASFLAGS) $(INCLUDES_ASM) -c $< -o $@
 
-	$(ASM_LIB_DIR)/%.o: %.s
+	$(ASM_LIB_BUILD_DIR)/%.o: %.s
 		@mkdir -p $(@D)
 		$(AS) $(ASFLAGS) $(INCLUDES_ASM) -c $< -o $@
 endif
 
-# Clean up build files
+# Pattern rule for building framework object files
+$(FRAMEWORK_BUILD_DIR)/%.o: $(FRAMEWORK_SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) $(FRAMEWORK_INCLUDES) -c $< -o $@
+
+# Clean up build and dist files
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo "Build artifacts cleaned"
 
 # Create fresh build and dist directories after cleaning
 reset: clean
-	mkdir -p $(SRC_DIR) $(FRAMEWORK_DIR) $(MAP_DIR) $(ELF_DIR) $(DIST_DIR)
+	mkdir -p $(SRC_BUILD_DIR) $(FRAMEWORK_BUILD_DIR) $(MAP_DIR) $(ELF_DIR) $(DIST_DIR)
 ifeq ($(ASM_ENABLED),1)
-	mkdir -p $(ASM_SRC_DIR) $(ASM_LIB_DIR)
+	mkdir -p $(ASM_SRC_BUILD_DIR) $(ASM_LIB_BUILD_DIR)
 endif
 	@echo "Build environment reset"
 
